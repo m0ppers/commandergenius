@@ -85,9 +85,9 @@ if ( grep "package $AppFullName;" project/src/Globals.java > /dev/null 2>&1 && \
 	touch project/src/Globals.java
 fi
 if $build_release ; then
-	sed -i 's/android:debuggable="true"/android:debuggable="false"/g' project/AndroidManifest.xml
+	sed -i bak 's/android:debuggable="true"/android:debuggable="false"/g' project/AndroidManifest.xml
 else
-	sed -i 's/android:debuggable="false"/android:debuggable="true"/g' project/AndroidManifest.xml
+	sed -i bak 's/android:debuggable="false"/android:debuggable="true"/g' project/AndroidManifest.xml
 fi
 
 [ -e project/local.properties ] || {

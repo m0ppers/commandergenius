@@ -16,7 +16,6 @@ fi
 
 NDK=`which ndk-build`
 NDK=`dirname $NDK`
-NDK=`readlink -f $NDK`
 
 #echo NDK $NDK
 GCCPREFIX=arm-linux-androideabi
@@ -51,6 +50,8 @@ done
 MISSING_INCLUDE=
 MISSING_LIB=
 
+echo '#################################### $(echo $APP_MODULES | sed "s@\([-a-zA-Z0-9_.]*\)@-isystem$LOCAL_PATH/../\1/include@g")'
+
 CFLAGS="\
 -fpic -ffunction-sections -funwind-tables -fstack-protector-strong \
 -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float \
@@ -62,7 +63,7 @@ CFLAGS="\
 -isystem$NDK/sources/cxx-stl/gnu-libstdc++/$NDK_TOOLCHAIN_VERSION/libs/$ARCH/include \
 -isystem$NDK/sources/cxx-stl/gnu-libstdc++/$NDK_TOOLCHAIN_VERSION/include/backward \
 -isystem$LOCAL_PATH/../sdl-1.2/include \
-`echo $APP_MODULES | sed \"s@\([-a-zA-Z0-9_.]\+\)@-isystem$LOCAL_PATH/../\1/include@g\"` \
+$(echo $APP_MODULES | sed "s@\([-a-zA-Z0-9_.]*\)@-isystem$LOCAL_PATH/../\1/include@g") \
 $MISSING_INCLUDE $CFLAGS"
 
 if [ -z "$SHARED_LIBRARY_NAME" ]; then

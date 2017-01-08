@@ -16,7 +16,6 @@ fi
 
 NDK=`which ndk-build`
 NDK=`dirname $NDK`
-NDK=`readlink -f $NDK`
 
 #echo NDK $NDK
 GCCPREFIX=arm-linux-androideabi
@@ -37,12 +36,15 @@ echo $APP_MODULES | xargs -n 1 echo | while read LIB ; do
 	STATIC=`echo $APP_AVAILABLE_STATIC_LIBS application sdl_main stlport stdout-test | grep "\\\\b$LIB\\\\b"`
 	if [ -n "$STATIC" ] ; then true
 	else
-		case $LIB in
-			crypto) echo crypto.so.sdl.1;;
-			ssl) echo ssl.so.sdl.1;;
-			curl) echo curl-sdl;;
-			*) echo $LIB;;
-		esac
+          if [ "$LIB" == "crypto" ]; then
+            echo crypto.so.sdl.1
+          elif [ "$LIB" == "ssl" ]; then
+            echo ssl.so.sdl.1
+          elif [ "$LIB" == "" ]; then
+            echo "curl-sdl"
+          else
+            echo $LIB
+          fi
 	fi
 done
 )
@@ -51,6 +53,8 @@ done
 MISSING_INCLUDE=
 MISSING_LIB=
 
+DINGS=$(echo $APP_MODULES | sed "s@\([-a-zA-Z0-9_.]*\)@-isystem$LOCAL_PATH/../\1/include@g")
+echo "#################################### $DINGS"
 CFLAGS="\
 -fpic -ffunction-sections -funwind-tables -fstack-protector-strong \
 -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp \
@@ -62,7 +66,7 @@ CFLAGS="\
 -isystem$NDK/sources/cxx-stl/gnu-libstdc++/$NDK_TOOLCHAIN_VERSION/libs/$ARCH/include \
 -isystem$NDK/sources/cxx-stl/gnu-libstdc++/$NDK_TOOLCHAIN_VERSION/include/backward \
 -isystem$LOCAL_PATH/../sdl-1.2/include \
-`echo $APP_MODULES | sed \"s@\([-a-zA-Z0-9_.]\+\)@-isystem$LOCAL_PATH/../\1/include@g\"` \
+$(echo $APP_MODULES | sed "s@\([-a-zA-Z0-9_.]*\)@-isystem$LOCAL_PATH/../\1/include@g") \
 $MISSING_INCLUDE $CFLAGS"
 
 if [ -z "$SHARED_LIBRARY_NAME" ]; then
@@ -84,7 +88,7 @@ LDFLAGS="\
 $SHARED \
 --sysroot=$NDK/platforms/$PLATFORMVER/arch-arm \
 -L$LOCAL_PATH/../../obj/local/$ARCH \
-`echo $APP_SHARED_LIBS | sed \"s@\([-a-zA-Z0-9_.]\+\)@$LOCAL_PATH/../../obj/local/$ARCH/lib\1.so@g\"` \
+`echo $APP_SHARED_LIBS | sed \"s@\([-a-zA-Z0-9_.]*\)@$LOCAL_PATH/../../obj/local/$ARCH/lib\1.so@g\"` \
 -L$NDK/platforms/$PLATFORMVER/arch-arm/usr/lib \
 -lc -lm -lGLESv1_CM -ldl -llog -lz \
 -L$NDK/sources/cxx-stl/gnu-libstdc++/$NDK_TOOLCHAIN_VERSION/libs/$ARCH \
@@ -116,6 +120,10 @@ CXX="$NDK/toolchains/llvm/prebuilt/$MYARCH/bin/clang++"
 CPP="$CC -E $CFLAGS"
 
 fi
+
+
+echo "############## CFLAGS: $CFLAGS"
+echo "############## LDFLAGS: $LDFLAGS"
 
 env PATH=$NDK/toolchains/$GCCPREFIX-$NDK_TOOLCHAIN_VERSION/prebuilt/$MYARCH/bin:$LOCAL_PATH:$PATH \
 CFLAGS="$CFLAGS" \

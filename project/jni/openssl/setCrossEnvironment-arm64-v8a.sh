@@ -16,7 +16,6 @@ fi
 
 NDK=`which ndk-build`
 NDK=`dirname $NDK`
-NDK=`readlink -f $NDK`
 
 [ -z "$NDK" ] && { echo "You need Andorid NDK r8 or newer installed to run this script" ; exit 1 ; }
 GCCPREFIX=aarch64-linux-android
